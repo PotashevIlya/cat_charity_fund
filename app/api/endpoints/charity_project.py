@@ -10,8 +10,10 @@ from app.schemas.charity_project import (
 )
 from app.api.validators import (
     check_charity_project_exists, check_charity_project_is_open,
-    check_charity_project_investments, check_full_amount_update
+    check_charity_project_investments, check_full_amount_update,
+    check_charity_project_name_duplicate
 )
+from app.services.investment_logic import invest_to_project
 
 router = APIRouter()
 
@@ -27,10 +29,13 @@ async def create_new_charity_project(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Только для суперюзеров."""
+    await check_charity_project_name_duplicate(charity_project.name, session)
     new_charity_project = await charity_project_crud.create(
         charity_project,
         session
     )
+    await invest_to_project(new_charity_project, session)
+    await session.refresh(new_charity_project)
     return new_charity_project
 
 
@@ -61,7 +66,10 @@ async def partially_update_charity_project(
     """Только для суперюзеров"""
     charity_project = await check_charity_project_exists(project_id, session)
     charity_project = await check_charity_project_is_open(project_id, session)
-    await check_full_amount_update(charity_project.invested_amount, obj_in.full_amount)
+    if obj_in.full_amount:
+        await check_full_amount_update(charity_project.invested_amount, obj_in.full_amount)
+    if obj_in.name:
+        await check_charity_project_name_duplicate(obj_in.name, session)
     charity_project = await charity_project_crud.update(charity_project, obj_in, session)
     return charity_project
 

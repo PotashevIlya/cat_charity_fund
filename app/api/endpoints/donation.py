@@ -10,6 +10,8 @@ from app.schemas.donation import (
 )
 from app.models import User
 
+from app.services.investment_logic import invest_donation
+
 
 router = APIRouter()
 
@@ -17,14 +19,16 @@ router = APIRouter()
 @router.post(
     '/',
     response_model=DonationBriefDB,
-    response_model_exclude_none=True,
-    dependencies=[Depends(current_user)]
+    response_model_exclude_none=True
 )
 async def create_new_donation(
     donation: DonationCreate,
-    session: AsyncSession = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_user)
 ):
-    new_donation = await donation_crud.create(donation, session)
+    new_donation = await donation_crud.create(donation, session, user)
+    await invest_donation(new_donation, session)
+    await session.refresh(new_donation)
     return new_donation
 
 
