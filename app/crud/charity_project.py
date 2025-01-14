@@ -27,8 +27,8 @@ class CRUDCharityProject(CRUDBase):
             session: AsyncSession
     ):
         sorted_by_create_date_open_projects = await session.execute(
-            select(CharityProject).where(CharityProject.fully_invested ==
-                                         False).order_by(CharityProject.create_date)
+            select(CharityProject).where(CharityProject.fully_invested == 0
+                                         ).order_by(CharityProject.create_date)
         )
         return sorted_by_create_date_open_projects.scalars().all()
 

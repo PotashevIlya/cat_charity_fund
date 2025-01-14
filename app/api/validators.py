@@ -26,7 +26,7 @@ async def check_charity_project_exists(
     )
     if not charity_project:
         raise HTTPException(
-            status_code=404,
+            status_code=400,
             detail='Благотворительный проект не найден!'
         )
     return charity_project

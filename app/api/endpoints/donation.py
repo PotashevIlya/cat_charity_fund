@@ -10,7 +10,7 @@ from app.schemas.donation import (
 )
 from app.models import User
 
-from app.services.investment_logic import invest_donation
+from app.services.investment_logic import distribute_new_donation_among_projects
 
 
 router = APIRouter()
@@ -27,9 +27,7 @@ async def create_new_donation(
     user: User = Depends(current_user)
 ):
     new_donation = await donation_crud.create(donation, session, user)
-    await invest_donation(new_donation, session)
-    await session.refresh(new_donation)
-    return new_donation
+    return await distribute_new_donation_among_projects(new_donation, session)
 
 
 @router.get(

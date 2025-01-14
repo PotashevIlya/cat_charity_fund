@@ -13,7 +13,7 @@ from app.api.validators import (
     check_charity_project_investments, check_full_amount_update,
     check_charity_project_name_duplicate
 )
-from app.services.investment_logic import invest_to_project
+from app.services.investment_logic import distribute_open_donations_among_project
 
 router = APIRouter()
 
@@ -34,9 +34,7 @@ async def create_new_charity_project(
         charity_project,
         session
     )
-    await invest_to_project(new_charity_project, session)
-    await session.refresh(new_charity_project)
-    return new_charity_project
+    return await distribute_open_donations_among_project(new_charity_project, session)
 
 
 @router.get(
