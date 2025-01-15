@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
@@ -32,15 +33,20 @@ class CRUDBase:
             self,
             obj_in,
             session: AsyncSession,
-            user: Optional[User] = None
+            user: Optional[User] = None,
+            need_for_commit: Optional[bool] = True
     ):
         obj_in_data = obj_in.dict()
+        if not need_for_commit:
+            obj_in_data['invested_amount'] = 0
+            obj_in_data['fully_invested'] = False
         if user is not None:
             obj_in_data['user_id'] = user.id
         db_obj = self.model(**obj_in_data)
         session.add(db_obj)
-        await session.commit()
-        await session.refresh(db_obj)
+        if need_for_commit:
+            await session.commit()
+            await session.refresh(db_obj)
         return db_obj
 
     async def update(
@@ -49,6 +55,10 @@ class CRUDBase:
             obj_in,
             session: AsyncSession,
     ):
+        if obj_in.full_amount:
+            if obj_in.full_amount == db_obj.invested_amount:
+                setattr(db_obj, 'fully_invested', True)
+                setattr(db_obj, 'close_date', datetime.utcnow())
         obj_data = jsonable_encoder(db_obj)
         update_data = obj_in.dict(exclude_unset=True)
         for field in obj_data:
@@ -67,3 +77,22 @@ class CRUDBase:
         await session.delete(db_obj)
         await session.commit()
         return db_obj
+
+    async def get_all_open_projects(
+            self,
+            session: AsyncSession
+    ):
+        open_projects = await session.execute(
+            select(self.model).where(self.model.fully_invested == 0
+                                     ).order_by(self.model.create_date)
+        )
+        return open_projects.scalars().all()
+
+    async def get_all_open_donations(
+            self,
+            session: AsyncSession
+    ):
+        all_open_donations = await session.execute(
+            select(self.model).where(self.model.fully_invested == 0)
+        )
+        return all_open_donations.scalars().all()

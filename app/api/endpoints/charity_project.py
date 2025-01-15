@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_async_session
 from app.core.user import current_superuser
 from app.crud.charity_project import charity_project_crud
+from app.crud.donation import donation_crud
 from app.schemas.charity_project import (
     CharityProjectCreate, CharityProjectDB, CharityProjectUpdate
 )
@@ -14,7 +15,8 @@ from app.api.validators import (
     check_charity_project_name_duplicate
 )
 from app.services.investment_logic import (
-    distribute_open_donations_among_new_project
+    #distribute_open_donations_among_new_project, 
+    distribute_investments
 )
 
 router = APIRouter()
@@ -32,12 +34,28 @@ async def create_new_charity_project(
 ):
     """Только для суперюзеров."""
     await check_charity_project_name_duplicate(charity_project.name, session)
-    new_charity_project = await charity_project_crud.create(
-        charity_project, session
+    # new_charity_project = await charity_project_crud.create(
+    #     charity_project, session
+    # )
+    # return await distribute_open_donations_among_new_project(
+    #     new_charity_project, session
+    # )
+    open_donations = await donation_crud.get_all_open_donations(session)
+    if not open_donations:
+        return await charity_project_crud.create(
+            charity_project, session
+        )
+    new_project = await charity_project_crud.create(
+        charity_project, session, need_for_commit=False
     )
-    return await distribute_open_donations_among_new_project(
-        new_charity_project, session
-    )
+    new_project, open_donations = distribute_investments(new_project, open_donations)
+    session.add(new_project)
+    for donation in open_donations:
+        session.add(donation)
+    await session.commit()
+    await session.refresh(new_project)
+    return new_project
+
 
 
 @router.get(
@@ -67,7 +85,7 @@ async def partially_update_charity_project(
     charity_project = await check_charity_project_exists(project_id, session)
     await check_charity_project_is_open(project_id, session)
     if obj_in.full_amount:
-        await check_full_amount_update(
+        check_full_amount_update(
             charity_project.invested_amount, obj_in.full_amount
         )
     if obj_in.name:

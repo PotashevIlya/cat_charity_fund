@@ -1,4 +1,4 @@
-from .base_model import BaseModel  # noqa
+from .base_model import CharityProjectAndDonationBaseModel  # noqa
 from .charity_project import CharityProject  # noqa
 from .donation import Donation  # noqa
 from .user import User  # noqa

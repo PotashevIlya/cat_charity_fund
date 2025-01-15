@@ -5,13 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_async_session
 from app.core.user import current_superuser, current_user
 from app.crud.donation import donation_crud
+from app.crud.charity_project import charity_project_crud
 from app.schemas.donation import (
     DonationCreate, DonationBriefDB, DonationFullDB
 )
 from app.models import User
 
 from app.services.investment_logic import (
-    distribute_new_donation_among_projects
+    #distribute_new_donation_among_projects,
+    distribute_investments
 )
 
 
@@ -29,8 +31,23 @@ async def create_new_donation(
     user: User = Depends(current_user)
 ):
     """Для всех зарегистрированных пользователей."""
-    new_donation = await donation_crud.create(donation, session, user)
-    return await distribute_new_donation_among_projects(new_donation, session)
+    # new_donation = await donation_crud.create(donation, session, user)
+    # return await distribute_new_donation_among_projects(new_donation, session)
+    open_projects = await charity_project_crud.get_all_open_projects(session)
+    if not open_projects:
+        return await donation_crud.create(
+            donation, session, user
+        )
+    new_donation = await donation_crud.create(
+        donation, session, user, need_for_commit=False
+    )
+    new_donation, open_projects = distribute_investments(new_donation, open_projects)
+    session.add(new_donation)
+    for project in open_projects:
+        session.add(project)
+    await session.commit()
+    await session.refresh(new_donation)
+    return new_donation
 
 
 @router.get(
