@@ -8,9 +8,6 @@ Cat Charity Fund - это сервис для отправки пожертво�
 
 ```
 git clone https://github.com/PotashevIlya/cat_charity_fund
-```
-
-```
 cd cat_charity_fund
 ```
 2. Cоздать и активировать виртуальное окружение:
