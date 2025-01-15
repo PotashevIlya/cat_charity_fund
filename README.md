@@ -81,3 +81,7 @@ uvicorn app.main:app
 Полная спецификация будет доступна по ссылкам /docs или /redoc после запуска сервера
 
 ### Технологический стек :bulb:
+Python, FastAPI, SQLAlchemy
+___  
+#### Автор проекта:  
+:small_orange_diamond: [Поташев Илья](https://github.com/PotashevIlya)  
