@@ -131,8 +131,4 @@ dmypy.json
 # .idea
 .idea
 
-# FastAPI stuff
-fastapi.db
-
-# Other stuff
-test.db
+.db
