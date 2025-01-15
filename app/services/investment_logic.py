@@ -6,7 +6,10 @@ from app.models import CharityProjectAndDonationBaseModel
 def distribute_investments(
     target: CharityProjectAndDonationBaseModel,
     sources: list[CharityProjectAndDonationBaseModel]
-) -> tuple[CharityProjectAndDonationBaseModel]:
+) -> tuple[
+    CharityProjectAndDonationBaseModel,
+    list[CharityProjectAndDonationBaseModel]
+]:
     for source in sources:
         current_sum = source.full_amount - source.invested_amount
         required_sum = target.full_amount - target.invested_amount
