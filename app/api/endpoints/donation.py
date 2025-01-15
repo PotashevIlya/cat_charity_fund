@@ -10,7 +10,9 @@ from app.schemas.donation import (
 )
 from app.models import User
 
-from app.services.investment_logic import distribute_new_donation_among_projects
+from app.services.investment_logic import (
+    distribute_new_donation_among_projects
+)
 
 
 router = APIRouter()
@@ -26,6 +28,7 @@ async def create_new_donation(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user)
 ):
+    """Для всех зарегистрированных пользователей."""
     new_donation = await donation_crud.create(donation, session, user)
     return await distribute_new_donation_among_projects(new_donation, session)
 
@@ -40,8 +43,7 @@ async def get_all_donations(
     session: AsyncSession = Depends(get_async_session)
 ):
     """Только для суперюзеров."""
-    all_donations = await donation_crud.get_multi(session)
-    return all_donations
+    return await donation_crud.get_multi(session)
 
 
 @router.get(
@@ -55,8 +57,7 @@ async def get_my_donations(
     user: User = Depends(current_user)
 ):
     """Получить список пожертвований текущего пользователя."""
-    user_donations = await donation_crud.get_user_donations(
+    return await donation_crud.get_user_donations(
         session=session,
         user=user
     )
-    return user_donations

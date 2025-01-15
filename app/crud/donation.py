@@ -22,7 +22,7 @@ class DonationCRUD(CRUDBase):
             session: AsyncSession
     ):
         all_open_donations = await session.execute(
-            select(Donation).where(Donation.fully_invested == False)
+            select(Donation).where(Donation.fully_invested == 0)
         )
         return all_open_donations.scalars().all()
 

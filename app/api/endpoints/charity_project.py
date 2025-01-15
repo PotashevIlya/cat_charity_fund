@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
-from app.core.user import current_superuser, current_user
+from app.core.user import current_superuser
 from app.crud.charity_project import charity_project_crud
 from app.schemas.charity_project import (
     CharityProjectCreate, CharityProjectDB, CharityProjectUpdate
@@ -13,7 +13,9 @@ from app.api.validators import (
     check_charity_project_investments, check_full_amount_update,
     check_charity_project_name_duplicate
 )
-from app.services.investment_logic import distribute_open_donations_among_project
+from app.services.investment_logic import (
+    distribute_open_donations_among_new_project
+)
 
 router = APIRouter()
 
@@ -31,10 +33,11 @@ async def create_new_charity_project(
     """Только для суперюзеров."""
     await check_charity_project_name_duplicate(charity_project.name, session)
     new_charity_project = await charity_project_crud.create(
-        charity_project,
-        session
+        charity_project, session
     )
-    return await distribute_open_donations_among_project(new_charity_project, session)
+    return await distribute_open_donations_among_new_project(
+        new_charity_project, session
+    )
 
 
 @router.get(
@@ -46,8 +49,7 @@ async def get_all_charity_projects(
     session: AsyncSession = Depends(get_async_session)
 ):
     """Для любого пользователя."""
-    all_charity_projects = await charity_project_crud.get_multi(session)
-    return all_charity_projects
+    return await charity_project_crud.get_multi(session)
 
 
 @router.patch(
@@ -63,13 +65,14 @@ async def partially_update_charity_project(
 ):
     """Только для суперюзеров"""
     charity_project = await check_charity_project_exists(project_id, session)
-    charity_project = await check_charity_project_is_open(project_id, session)
+    await check_charity_project_is_open(project_id, session)
     if obj_in.full_amount:
-        await check_full_amount_update(charity_project.invested_amount, obj_in.full_amount)
+        await check_full_amount_update(
+            charity_project.invested_amount, obj_in.full_amount
+        )
     if obj_in.name:
         await check_charity_project_name_duplicate(obj_in.name, session)
-    charity_project = await charity_project_crud.update(charity_project, obj_in, session)
-    return charity_project
+    return await charity_project_crud.update(charity_project, obj_in, session)
 
 
 @router.delete(
@@ -86,13 +89,10 @@ async def remove_charity_project(
     charity_project = await check_charity_project_exists(
         project_id, session
     )
-    charity_project = await check_charity_project_is_open(
+    await check_charity_project_is_open(project_id, session)
+    await check_charity_project_investments(
         project_id, session
     )
-    charity_project = await check_charity_project_investments(
-        project_id, session
-    )
-    charity_project = await charity_project_crud.remove(
+    return await charity_project_crud.remove(
         charity_project, session
     )
-    return charity_project
