@@ -43,6 +43,7 @@ class CRUDBase:
         if not need_for_commit:
             db_obj.invested_amount = 0
             db_obj.fully_invested = False
+            session.add(db_obj)
             return db_obj
         session.add(db_obj)
         await session.commit()
@@ -78,21 +79,11 @@ class CRUDBase:
         await session.commit()
         return db_obj
 
-    async def get_all_open_projects(
+    async def get_all_open(
             self,
             session: AsyncSession
     ):
-        open_projects = await session.execute(
-            select(self.model).where(self.model.fully_invested == 0
-                                     ).order_by(self.model.create_date)
-        )
-        return open_projects.scalars().all()
-
-    async def get_all_open_donations(
-            self,
-            session: AsyncSession
-    ):
-        all_open_donations = await session.execute(
+        open = await session.execute(
             select(self.model).where(self.model.fully_invested == 0)
         )
-        return all_open_donations.scalars().all()
+        return open.scalars().all()

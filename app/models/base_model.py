@@ -14,7 +14,8 @@ class CharityProjectAndDonationBaseModel(Base):
     close_date = Column(DateTime)
     __table_args__ = (
         CheckConstraint('full_amount > 0'),
-        CheckConstraint('full_amount >= invested_amount')
+        CheckConstraint('full_amount >= invested_amount'),
+        CheckConstraint('invested_amount >= 0')
     )
 
     def __repr__(self):
