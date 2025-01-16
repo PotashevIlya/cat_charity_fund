@@ -19,6 +19,6 @@ def distribute_investments(
                 obj.fully_invested = True
                 obj.close_date = datetime.utcnow()
             changed.append(source)
-        if target.full_amount - target.invested_amount == 0:
+        if target.fully_invested:
             break
     return changed
