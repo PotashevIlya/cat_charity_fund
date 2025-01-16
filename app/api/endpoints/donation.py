@@ -11,10 +11,7 @@ from app.schemas.donation import (
 )
 from app.models import User
 
-from app.services.investment_logic import (
-    #distribute_new_donation_among_projects,
-    distribute_investments
-)
+from app.services.investment_logic import distribute_investments
 
 
 router = APIRouter()
@@ -31,8 +28,6 @@ async def create_new_donation(
     user: User = Depends(current_user)
 ):
     """Для всех зарегистрированных пользователей."""
-    # new_donation = await donation_crud.create(donation, session, user)
-    # return await distribute_new_donation_among_projects(new_donation, session)
     open_projects = await charity_project_crud.get_all_open_projects(session)
     if not open_projects:
         return await donation_crud.create(
@@ -41,7 +36,9 @@ async def create_new_donation(
     new_donation = await donation_crud.create(
         donation, session, user, need_for_commit=False
     )
-    new_donation, open_projects = distribute_investments(new_donation, open_projects)
+    new_donation, open_projects = distribute_investments(
+        new_donation, open_projects
+    )
     session.add(new_donation)
     for project in open_projects:
         session.add(project)

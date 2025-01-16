@@ -14,10 +14,8 @@ from app.api.validators import (
     check_charity_project_investments, check_full_amount_update,
     check_charity_project_name_duplicate
 )
-from app.services.investment_logic import (
-    #distribute_open_donations_among_new_project, 
-    distribute_investments
-)
+from app.services.investment_logic import distribute_investments
+
 
 router = APIRouter()
 
@@ -34,12 +32,6 @@ async def create_new_charity_project(
 ):
     """Только для суперюзеров."""
     await check_charity_project_name_duplicate(charity_project.name, session)
-    # new_charity_project = await charity_project_crud.create(
-    #     charity_project, session
-    # )
-    # return await distribute_open_donations_among_new_project(
-    #     new_charity_project, session
-    # )
     open_donations = await donation_crud.get_all_open_donations(session)
     if not open_donations:
         return await charity_project_crud.create(
@@ -48,14 +40,15 @@ async def create_new_charity_project(
     new_project = await charity_project_crud.create(
         charity_project, session, need_for_commit=False
     )
-    new_project, open_donations = distribute_investments(new_project, open_donations)
+    new_project, open_donations = distribute_investments(
+        new_project, open_donations
+    )
     session.add(new_project)
     for donation in open_donations:
         session.add(donation)
     await session.commit()
     await session.refresh(new_project)
     return new_project
-
 
 
 @router.get(

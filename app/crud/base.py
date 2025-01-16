@@ -37,16 +37,16 @@ class CRUDBase:
             need_for_commit: Optional[bool] = True
     ):
         obj_in_data = obj_in.dict()
-        if not need_for_commit:
-            obj_in_data['invested_amount'] = 0
-            obj_in_data['fully_invested'] = False
         if user is not None:
             obj_in_data['user_id'] = user.id
         db_obj = self.model(**obj_in_data)
+        if not need_for_commit:
+            db_obj.invested_amount = 0
+            db_obj.fully_invested = False
+            return db_obj
         session.add(db_obj)
-        if need_for_commit:
-            await session.commit()
-            await session.refresh(db_obj)
+        await session.commit()
+        await session.refresh(db_obj)
         return db_obj
 
     async def update(
