@@ -84,6 +84,7 @@ class CRUDBase:
             session: AsyncSession
     ):
         open = await session.execute(
-            select(self.model).where(self.model.fully_invested == 0)
+            select(self.model).where(self.model.fully_invested == 0).order_by(
+                self.model.create_date)
         )
         return open.scalars().all()
