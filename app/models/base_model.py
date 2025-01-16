@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, CheckConstraint, DateTime, Integer
 from app.core.db import Base
 
 
-class CharityProjectAndDonationBaseModel(Base):
+class InvestmentBaseModel(Base):
     __abstract__ = True
     full_amount = Column(Integer, nullable=False)
     invested_amount = Column(Integer, default=0)
@@ -14,8 +14,7 @@ class CharityProjectAndDonationBaseModel(Base):
     close_date = Column(DateTime)
     __table_args__ = (
         CheckConstraint('full_amount > 0'),
-        CheckConstraint('full_amount >= invested_amount'),
-        CheckConstraint('invested_amount >= 0')
+        CheckConstraint('0 <= invested_amount <= full_amount')
     )
 
     def __repr__(self):

@@ -43,11 +43,10 @@ class CRUDBase:
         if not need_for_commit:
             db_obj.invested_amount = 0
             db_obj.fully_invested = False
-            session.add(db_obj)
-            return db_obj
         session.add(db_obj)
-        await session.commit()
-        await session.refresh(db_obj)
+        if need_for_commit:
+            await session.commit()
+            await session.refresh(db_obj)
         return db_obj
 
     async def update(
